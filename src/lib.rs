@@ -22,7 +22,7 @@ pub enum Cell {
 pub struct Universe {
     height: usize,
     width: usize,
-    cells: Vec<Vec<Cell>>,
+    cells: Vec<Cell>,
 }
 
 impl Universe {
@@ -35,23 +35,28 @@ impl Universe {
                 }
                 let ni = (c_i + delta_i) % self.height;
                 let nj = (c_j + delta_j) % self.width;
-                if let Cell::Alive = self.cells[ni][nj] {
+                if let Cell::Alive = self.cells[self.get_1d_coordinate(ni, nj)] {
                     count += 1;
                 }
             }
         }
         count
     }
+
+    fn get_1d_coordinate(&self, ci: usize, cj: usize) -> usize {
+        ci * self.width + cj
+    }
 }
 
 #[wasm_bindgen]
 impl Universe {
     pub fn tick(&mut self) {
-        let mut next = vec![vec![Cell::Dead; self.width]; self.height];
+        let mut next = vec![Cell::Dead; self.height * self.width];
         for i in 0..self.height {
             for j in 0..self.width {
                 let live_neighbours = self.live_neighbours_count(i, j);
-                next[i][j] = match (&self.cells[i][j], live_neighbours) {
+                let index = self.get_1d_coordinate(i, j);
+                next[index] = match (&self.cells[index], live_neighbours) {
                     (Cell::Alive, x) if x < 2 => Cell::Dead,
                     (Cell::Alive, x) if x >= 2 && x <= 3 => Cell::Alive,
                     (Cell::Alive, x) if x > 3 => Cell::Dead,
@@ -66,17 +71,13 @@ impl Universe {
     pub fn new() -> Universe {
         let height = 64;
         let width = 64;
-        let cells = (0..height)
-            .map(|ci| {
-                (0..width)
-                    .map(|cj| {
-                        if (ci * width + cj) % 7 == 0 || (ci + cj) % 2 == 0 {
-                            Cell::Alive
-                        } else {
-                            Cell::Dead
-                        }
-                    })
-                    .collect()
+        let cells = (0..(height * width))
+            .map(|index| {
+                if index % 7 == 0 || index % 2 == 0 {
+                    Cell::Alive
+                } else {
+                    Cell::Dead
+                }
             })
             .collect();
         Universe {
@@ -93,7 +94,7 @@ impl Universe {
 
 impl Display for Universe {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for row in self.cells.iter() {
+        for row in self.cells.iter().as_slice().chunks(self.width) {
             for col in row.iter() {
                 write!(
                     f,

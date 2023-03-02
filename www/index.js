@@ -6,7 +6,7 @@ const universe = Universe.new();
 const renderLoop = () => {
   pre.textContent = universe.render();
   universe.tick();
-  setTimeout(() => requestAnimationFrame(renderLoop), 1000);
+  setTimeout(() => requestAnimationFrame(renderLoop), 100);
 };
 
 requestAnimationFrame(renderLoop);
