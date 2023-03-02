@@ -90,6 +90,18 @@ impl Universe {
     pub fn render(&self) -> String {
         self.to_string()
     }
+
+    pub fn height(&self) -> u32 {
+        self.height as u32
+    }
+
+    pub fn width(&self) -> u32 {
+        self.width as u32
+    }
+
+    pub fn cells(&self) -> *const Cell {
+        self.cells.as_ptr()
+    }
 }
 
 impl Display for Universe {
